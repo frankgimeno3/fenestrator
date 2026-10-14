@@ -1,28 +1,16 @@
-import TimeLogModel from "../features/timeLog/TimeLogModel.js";
-import ModificationModel from "../features/modification/ModificationModel.js";
 import CompanyModel from "../features/company/CompanyModel.js";
 import ProductModel from "../features/product/ProductModel.js";
-import ArticleModel from "../features/article/ArticleModel.js";
-import CommentModel from "../features/comment/CommentModel.js";
-import UserProfileModel from "../features/userProfile/UserProfileModel.js";
+import ServiceGroupDbModel from "../features/service_catalog/ServiceGroupDbModel.js";
+import ServiceDbModel from "../features/service_catalog/ServiceDbModel.js";
+import PanelTicketModel from "../features/panel_ticket/PanelTicketModel.js";
+import PanelTicketAdvertisementModel from "../features/panel_ticket/PanelTicketAdvertisementModel.js";
+import PanelTicketCompanyDataModel from "../features/panel_ticket/PanelTicketCompanyDataModel.js";
 
 let associationsAlreadyDefined = false;
 
 export function defineAssociations() {
     if (associationsAlreadyDefined) return;
     associationsAlreadyDefined = true;
-
-    TimeLogModel.hasMany(ModificationModel, {
-        foreignKey: 'time_log_id',
-        as: 'modifications',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-    })
-
-    ModificationModel.belongsTo(TimeLogModel, {
-        foreignKey: 'time_log_id',
-        as: 'timeLog'
-    })
 
     CompanyModel.hasMany(ProductModel, {
         foreignKey: 'id_company',
@@ -34,29 +22,30 @@ export function defineAssociations() {
     ProductModel.belongsTo(CompanyModel, {
         foreignKey: 'id_company',
         as: 'company'
-    })
+    });
 
-    ArticleModel.hasMany(CommentModel, {
-        foreignKey: 'id_article',
-        as: 'comments',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-    })
+    ServiceDbModel.belongsTo(ServiceGroupDbModel, { foreignKey: "service_group_id", as: "service_group" });
+    ServiceGroupDbModel.hasMany(ServiceDbModel, { foreignKey: "service_group_id", as: "services" });
 
-    CommentModel.belongsTo(ArticleModel, {
-        foreignKey: 'id_article',
-        as: 'article'
-    })
+    PanelTicketModel.hasOne(PanelTicketAdvertisementModel, {
+        foreignKey: "ticket_id",
+        sourceKey: "panel_ticket_id",
+        as: "advertisement_request",
+        onDelete: "CASCADE"
+    });
+    PanelTicketAdvertisementModel.belongsTo(PanelTicketModel, {
+        foreignKey: "ticket_id",
+        targetKey: "panel_ticket_id"
+    });
 
-    UserProfileModel.hasMany(CommentModel, {
-        foreignKey: 'comment_id_user',
-        targetKey: 'id_user',
-        as: 'comments'
-    })
-
-    CommentModel.belongsTo(UserProfileModel, {
-        foreignKey: 'comment_id_user',
-        targetKey: 'id_user',
-        as: 'user'
-    })
+    PanelTicketModel.hasOne(PanelTicketCompanyDataModel, {
+        foreignKey: "ticket_id",
+        sourceKey: "panel_ticket_id",
+        as: "company_data",
+        onDelete: "CASCADE",
+    });
+    PanelTicketCompanyDataModel.belongsTo(PanelTicketModel, {
+        foreignKey: "ticket_id",
+        targetKey: "panel_ticket_id",
+    });
 }

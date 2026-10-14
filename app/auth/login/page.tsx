@@ -1,124 +1,244 @@
 "use client"
-import { FC, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { FC, useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AuthenticationService from "@/apiClient/AuthenticationService";
+import apiClient from "@/app/apiClient";
+import {
+    AUTH_AUX_TEXT,
+    AUTH_CARD,
+    AUTH_ERROR,
+    AUTH_FORM,
+    AUTH_ICON_BUTTON,
+    AUTH_INPUT,
+    AUTH_PAGE_SHELL,
+    AUTH_PRIMARY_BUTTON,
+    AUTH_SKELETON_CARD,
+    AUTH_SKELETON_SHELL,
+    AUTH_TITLE,
+} from "../_components/authFormStyles";
+import { GoogleOAuthSection } from "../_components/GoogleOAuthSection";
+import Reveal from "@/app/general_components/motion/Reveal";
 
 
 interface LoginProps {
 
 }
 
-const Login: FC<LoginProps> = ({ }) => {
+const LoginContent: FC<LoginProps> = ({ }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectParam = searchParams.get("redirect");
+    const redirect = redirectParam && redirectParam.startsWith("/") ? redirectParam : "/logged";
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [sessionChecked, setSessionChecked] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
+    const [googleError, setGoogleError] = useState<string | null>(null);
 
-    // El middleware maneja la redirección automáticamente, no necesitamos verificar aquí
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const ok = await AuthenticationService.isAuthenticated();
+                if (cancelled) return;
+                if (ok) {
+                    router.replace(redirect);
+                    return;
+                }
+            } catch {
+                /* ignore */
+            }
+            if (!cancelled) {
+                setSessionChecked(true);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [router, redirect]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
         try {
-            const payload: any = await AuthenticationService.login(email, password);
+            await AuthenticationService.login(email, password);
 
             // El AuthenticationService ya guarda los tokens en cookies mediante CookieStorage
             // y el username en localStorage
-            // El middleware detectará las cookies y redirigirá automáticamente
-            router.replace('/logged');
+            try {
+                await apiClient.post("/api/v1/users/me/portal-feed-sync", {});
+            } catch {
+                /* best-effort: feed bootstrap should not block login */
+            }
+            router.replace(redirect);
         } catch (e: any) {
             console.error(e);
-            setError(e?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+            setError(e?.message || 'Login failed. Please verify your credentials.');
         }
     };
 
-    return (
-        <div className='flex flex-col bg-white items-center justify-center min-h-screen'>
-            <form
-                onSubmit={handleLogin}
-                className="flex flex-col gap-4 bg-gray-900 p-8 rounded shadow-md w-full max-w-md"
-            >
-                <h2 className="text-2xl text-white font-semibold mb-4 text-center">
-                    Ingrese email y contraseña
-                </h2>
+    const handleGoogleLogin = async () => {
+        setGoogleError(null);
+        setGoogleLoading(true);
+        try {
+            if (!AuthenticationService.isGoogleOAuthConfigured()) {
+                setGoogleError(
+                    AuthenticationService.mapOAuthErrorToMessage(new Error("GOOGLE_OAUTH_CONFIG_MISSING"))
+                );
+                return;
+            }
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("oauth_post_login_redirect", redirect);
+                sessionStorage.removeItem("oauth_signup_newsletter");
+            }
+            await AuthenticationService.startGoogleRedirectSignIn({ intent: "login" });
+        } catch (e: unknown) {
+            console.error(e);
+            setGoogleError(AuthenticationService.mapOAuthErrorToMessage(e));
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
 
-                <input
-                    type="text"
-                    placeholder="Introduzca su email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="p-2 rounded bg-black border border-gray-700 text-white placeholder-gray-400"
-                    required
-                />
-
-                <div className="relative">
-                    <input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Introduzca su contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="p-2 rounded bg-black border border-gray-700 text-white placeholder-gray-400 w-full pr-10"
-                        required
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
-                        tabIndex={-1}
-                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    >
-                        {showPassword ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        )}
-                    </button>
-
-                </div>
-
-                {error && (
-                    <div className="flex flex-col text-red-500 text-sm text-center">
-                        <p>ERROR:</p>
-                        <p>{error}</p>
-                    </div>
-                )}
-
-                <button
-                    type="submit"
-                    className="bg-white text-black py-2 rounded hover:bg-gray-300 transition cursor-pointer"
-                >
-                    Identificarse
-                </button>
-
-
-            <div className='flex flex-col text-right gap-5 p-5'>
-                <p className='text-xs text-white'>
-                    Don't have an account?
-                    <a href='/auth/signup' className=' font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1'>
-                        Sign up
-                    </a>
-                </p>
-                <div className='flex flex-col text-right gap-5 p-5'>
-                    <p className='text-xs text-white'>
-                        Forgot your password?
-                        <a href='/auth/forgot' className=' font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1'>
-                            Reset password
-                        </a>
-                    </p>
+    if (!sessionChecked) {
+        return (
+            <div className={AUTH_SKELETON_SHELL}>
+                <div className={AUTH_SKELETON_CARD}>
+                    <div className="h-8 bg-gray-700 rounded animate-pulse" />
+                    <div className="h-4 bg-gray-700 rounded w-3/4 animate-pulse" />
+                    <div className="h-12 bg-gray-700 rounded animate-pulse" />
+                    <div className="h-12 bg-gray-700 rounded animate-pulse" />
                 </div>
             </div>
+        );
+    }
+
+    return (
+        <div className={AUTH_PAGE_SHELL}>
+            <form
+                onSubmit={handleLogin}
+                className={`${AUTH_CARD} ${AUTH_FORM}`}
+            >
+                <Reveal delayMs={0}>
+                    <h2 className={AUTH_TITLE}>
+                        Enter your email and password
+                    </h2>
+                </Reveal>
+
+                <Reveal delayMs={120}>
+                    <input
+                        type="text"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={AUTH_INPUT}
+                        required
+                    />
+                </Reveal>
+
+                <Reveal delayMs={180}>
+                    <div className="relative">
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className={`${AUTH_INPUT} pr-12`}
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className={AUTH_ICON_BUTTON}
+                            tabIndex={-1}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            )}
+                        </button>
+
+                    </div>
+                </Reveal>
+
+                {error && (
+                    <Reveal delayMs={220}>
+                        <div className={AUTH_ERROR}>
+                            <p>ERROR:</p>
+                            <p>{error}</p>
+                        </div>
+                    </Reveal>
+                )}
+
+                <Reveal delayMs={260}>
+                    <button
+                        type="submit"
+                        className={AUTH_PRIMARY_BUTTON}
+                    >
+                        Log in
+                    </button>
+                </Reveal>
+
+                <Reveal delayMs={320}>
+                    <GoogleOAuthSection
+                        buttonLabel="Continuar con Google"
+                        loading={googleLoading}
+                        disabled={googleLoading}
+                        error={googleError}
+                        onGoogleClick={handleGoogleLogin}
+                    />
+                </Reveal>
+
+                <Reveal delayMs={380}>
+                    <div className='flex flex-col gap-4 pt-2'>
+                        <p className={AUTH_AUX_TEXT}>
+                            Don't have an account?
+                            <a href={redirectParam ? `/auth/signup?redirect=${encodeURIComponent(redirectParam)}` : '/auth/signup'} className=' font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1'>
+                                Sign up
+                            </a>
+                        </p>
+                        <div className='flex flex-col gap-4'>
+                            <p className={AUTH_AUX_TEXT}>
+                                Forgot your password?
+                                <a href='/auth/forgot' className=' font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1'>
+                                    Reset password
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </Reveal>
             </form>
 
         </div>
     );
 };
 
-export default Login;
+const FallbackForm = () => (
+    <div className={AUTH_SKELETON_SHELL}>
+        <div className={AUTH_SKELETON_CARD}>
+            <div className="h-8 bg-gray-700 rounded animate-pulse" />
+            <div className="h-4 bg-gray-700 rounded w-3/4 animate-pulse" />
+            <div className="h-12 bg-gray-700 rounded animate-pulse" />
+            <div className="h-12 bg-gray-700 rounded animate-pulse" />
+        </div>
+    </div>
+);
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<FallbackForm />}>
+            <LoginContent />
+        </Suspense>
+    );
+}

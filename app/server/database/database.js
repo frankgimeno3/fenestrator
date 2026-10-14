@@ -1,3 +1,4 @@
+/** RDS schema: SQL migrations live under plynium_central_panel/server/database/migrations in this monorepo. */
 import {Sequelize} from "sequelize";
 import * as fs from "node:fs";
 import path from "node:path";
@@ -38,9 +39,11 @@ class Database {
         
         // During Next.js build, environment variables may not be available
         // Use placeholder values during build, validation will happen on connect()
-        const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || 
-                            process.env.NEXT_PHASE === 'phase-development-build' ||
-                            missingVars.length === requiredEnvVars.length; // All vars missing = likely build phase
+        const isBuildPhase =
+            process.env.NEXT_PHASE === "phase-production-build" ||
+            process.env.NEXT_PHASE === "phase-development-build" ||
+            (missingVars.length === requiredEnvVars.length &&
+                process.env.NODE_ENV !== "production");
         
         if (missingVars.length > 0 && !isBuildPhase) {
             throw new Error(`Missing required database environment variables: ${missingVars.join(', ')}`);

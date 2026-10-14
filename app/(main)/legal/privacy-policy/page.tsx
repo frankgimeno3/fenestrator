@@ -1,9 +1,10 @@
+import { PortalName, portalSector } from "@/app/GlassInformerSpecificData";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | GlassInformer",
-  description: "How GlassInformer collects, uses, and protects your personal data.",
+  title: `Privacy Policy | ${PortalName}`,
+  description: `How ${PortalName} collects, uses, and protects your personal data.`,
 };
 
 export default function PrivacyPolicyPage() {
@@ -18,7 +19,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">1. Who we are</h2>
           <p>
-            <strong>GlassInformer</strong> is a platform that provides industry news, articles, publications, a directory of companies and products, events, and mediakit services for the glass sector. We are committed to protecting your privacy and handling your personal data in a transparent and lawful way.
+            <strong>{PortalName}</strong> is a platform that provides industry news, articles, publications, a directory of companies and products, events, and mediakit services for the {portalSector}. We are committed to protecting your privacy and handling your personal data in a transparent and lawful way.
           </p>
         </section>
 
@@ -92,7 +93,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">10. Contact</h2>
           <p>
-            For any questions about this Privacy Policy or our data practices, please contact us through the contact options available on the GlassInformer website.
+            For any questions about this Privacy Policy or our data practices, please contact us through the contact options available on the {PortalName} website.
           </p>
         </section>
       </div>

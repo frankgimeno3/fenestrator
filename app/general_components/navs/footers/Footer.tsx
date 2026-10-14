@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import AuthenticationService from "@/apiClient/AuthenticationService";
+import { PortalName } from "@/app/GlassInformerSpecificData";
 
 const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,24 +38,21 @@ const Footer: FC = () => {
   return (
     <footer className="flex flex-col shadow-xl bg-white border-t border-gray-200 mt-auto">
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-12 py-10">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-gray-200 pb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-6 border-b border-gray-200 pb-8">
           <Link
             href="/"
             className="flex flex-col hover:opacity-80 transition-opacity"
           >
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 tracking-tight">
-              GlassInformer
+              {PortalName}
             </h2>
             <p className="text-xs text-gray-500 uppercase tracking-wider font-sans mt-1">
               Industry news & insights
             </p>
           </Link>
-          <nav className="flex flex-row items-center gap-6 text-sm text-gray-500 uppercase tracking-wider font-sans">
+          <nav className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6 text-sm text-gray-500 uppercase tracking-wider font-sans">
             <Link href="/articles" className="hover:text-gray-900 transition-colors">
               Articles
-            </Link>
-            <Link href="/publications" className="hover:text-gray-900 transition-colors">
-              Publications
             </Link>
             <Link href="/directory" className="hover:text-gray-900 transition-colors">
               Directory
@@ -62,8 +60,11 @@ const Footer: FC = () => {
               <Link href="/events" className="hover:text-gray-900 transition-colors">
               Events
             </Link>
-            <Link href="/mediakit" className="hover:text-gray-900 transition-colors">
-              Mediakit
+            <Link href="/advertise" className="hover:text-gray-900 transition-colors">
+              Advertise
+            </Link>
+            <Link href="/contact" className="hover:text-gray-900 transition-colors">
+              Contact us
             </Link>
             {isLogged === true ? (
               <button
@@ -112,7 +113,7 @@ const Footer: FC = () => {
           )}
         </div>
         <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500 font-sans">
-          <p>© {currentYear} Fenestrator. All rights reserved.</p>
+          <p>© {currentYear} {PortalName}. All rights reserved.</p>
           <p className="text-gray-400">
             {new Date().toLocaleDateString("en-EN", {
               weekday: "long",

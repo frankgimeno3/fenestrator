@@ -21,4 +21,15 @@ export class CompanyService {
         const response = await apiClient.post("/api/v1/companies", data);
         return response.data;
     }
+
+    static async requestCompanyCreation(data) {
+        const response = await apiClient.post("/api/v1/companies/request", data);
+        return response.data;
+    }
+
+    /** Submit directory company profile request (panel_tickets + panel_ticket_company_data). */
+    static async submitDirectoryCompanyRequest(data) {
+        const response = await apiClient.post("/api/v1/companies/directory-request", data);
+        return response.data;
+    }
 }

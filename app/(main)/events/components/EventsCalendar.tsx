@@ -1,8 +1,22 @@
 'use client';
 
 import React, { FC, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { canOptimizeRemoteImageSrc } from '@/app/lib/remoteImage';
 import { EventService } from '@/apiClient/EventService';
+
+function useIsMini() {
+  const [isMini, setIsMini] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const handler = () => setIsMini(mq.matches);
+    handler();
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMini;
+}
 
 export interface Event {
   id_fair: string;
@@ -18,6 +32,7 @@ export interface Event {
 
 const EventsCalendar: FC = () => {
   const router = useRouter();
+  const isMini = useIsMini();
   const [events, setEvents] = useState<Event[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -51,13 +66,14 @@ const EventsCalendar: FC = () => {
     }
   };
 
+  const step = isMini ? 1 : 2;
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth((prev) => {
       const newDate = new Date(prev);
       if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 1);
+        newDate.setMonth(newDate.getMonth() - step);
       } else {
-        newDate.setMonth(newDate.getMonth() + 1);
+        newDate.setMonth(newDate.getMonth() + step);
       }
       return newDate;
     });
@@ -130,6 +146,7 @@ const EventsCalendar: FC = () => {
     const month1 = new Date(currentMonth);
     const month2 = new Date(currentMonth);
     month2.setMonth(month2.getMonth() + 1);
+    const monthsToShow = isMini ? [month1] : [month1, month2];
 
     const renderMonth = (month: Date) => {
       const year = month.getFullYear();
@@ -222,30 +239,32 @@ const EventsCalendar: FC = () => {
 
     return (
       <div className="flex gap-4">
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <button
-              onClick={() => navigateMonth('prev')}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
-            >
-              ←
-            </button>
-            <span className="text-sm text-gray-600">Move Left</span>
+        {monthsToShow.map((month, idx) => (
+          <div key={idx} className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              {idx === 0 && (
+                <button
+                  onClick={() => navigateMonth('prev')}
+                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                >
+                  ←
+                </button>
+              )}
+              {idx === 0 && monthsToShow.length === 1 && <span />}
+              {idx === 0 && monthsToShow.length === 2 && <span className="text-sm text-gray-600">Move Left</span>}
+              {idx === 1 && <span className="text-sm text-gray-600">Move Right</span>}
+              {idx === monthsToShow.length - 1 && (
+                <button
+                  onClick={() => navigateMonth('next')}
+                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                >
+                  →
+                </button>
+              )}
+            </div>
+            {renderMonth(month)}
           </div>
-          {renderMonth(month1)}
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Move Right</span>
-            <button
-              onClick={() => navigateMonth('next')}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
-            >
-              →
-            </button>
-          </div>
-          {renderMonth(month2)}
-        </div>
+        ))}
       </div>
     );
   };
@@ -300,11 +319,16 @@ const EventsCalendar: FC = () => {
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex gap-3"
                     >
                       {event.event_main_image && (
-                        <img
-                          src={event.event_main_image}
-                          alt={event.event_name}
-                          className="w-14 h-14 flex-shrink-0 rounded-lg object-cover"
-                        />
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                          <Image
+                            src={event.event_main_image}
+                            alt={event.event_name}
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                            unoptimized={!canOptimizeRemoteImageSrc(event.event_main_image)}
+                          />
+                        </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <h4
@@ -374,11 +398,16 @@ const EventsCalendar: FC = () => {
                     }`}
                   >
                     {event.event_main_image && (
-                      <img
-                        src={event.event_main_image}
-                        alt={event.event_name}
-                        className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg object-cover"
-                      />
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-20">
+                        <Image
+                          src={event.event_main_image}
+                          alt={event.event_name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                          unoptimized={!canOptimizeRemoteImageSrc(event.event_main_image)}
+                        />
+                      </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <h3

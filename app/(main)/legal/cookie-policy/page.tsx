@@ -1,9 +1,10 @@
+import { PortalName } from "@/app/GlassInformerSpecificData";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | GlassInformer",
-  description: "How GlassInformer uses cookies and similar technologies.",
+  title: `Cookie Policy | ${PortalName}`,
+  description: `How ${PortalName} uses cookies and similar technologies.`,
 };
 
 export default function CookiePolicyPage() {
@@ -18,7 +19,7 @@ export default function CookiePolicyPage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">1. What are cookies?</h2>
           <p>
-            Cookies are small text files that are stored on your device (computer, tablet, or mobile) when you visit a website. They are widely used to make websites work more efficiently, to remember your preferences, and to provide information to the site owners. GlassInformer uses cookies and similar technologies (e.g. local storage) in line with this policy.
+            Cookies are small text files that are stored on your device (computer, tablet, or mobile) when you visit a website. They are widely used to make websites work more efficiently, to remember your preferences, and to provide information to the site owners. {PortalName} uses cookies and similar technologies (e.g. local storage) in line with this policy.
           </p>
         </section>
 
@@ -83,7 +84,7 @@ export default function CookiePolicyPage() {
             You can control cookies in several ways:
           </p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
-            <li><strong>Cookie banner / consent tool:</strong> When you first visit GlassInformer, you may be asked to accept or reject non-essential cookies. You can change your choices at any time via the link in the footer or in your account/settings if available.</li>
+            <li><strong>Cookie banner / consent tool:</strong> When you first visit {PortalName}, you may be asked to accept or reject non-essential cookies. You can change your choices at any time via the link in the footer or in your account/settings if available.</li>
             <li><strong>Browser settings:</strong> Most browsers allow you to block or delete cookies. Check your browser&apos;s &quot;Help&quot; or &quot;Settings&quot; for options. Blocking all cookies may affect how the site works.</li>
           </ul>
           <p className="mt-2">

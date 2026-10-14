@@ -62,10 +62,11 @@ export async function proxy(request) {
     };
 
     // Public paths that unauthenticated users are allowed to visit (no redirect to /)
-    // Auth routes + (main) content routes (publications, directory, events, mediakit, articles, search)
+    // Auth routes + (main) content routes; keep in sync with nav/footer links.
     const publicPathPrefixes = [
-        '/auth/login', '/auth/signup', '/auth/confirm', '/auth/forgot',
-        '/publications', '/directory', '/events', '/mediakit', '/articles', '/search'
+        '/auth/login', '/auth/signup', '/auth/signup/oauth-finish', '/auth/oauth', '/auth/confirm', '/auth/forgot',
+        '/directory', '/events', '/advertise', '/articles', '/search',
+        '/contact', '/legal',
     ];
     const isPublicPath = pathname === '/' || publicPathPrefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
@@ -177,5 +178,4 @@ export const config = {
         '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)).*)',
     ],
 }
-
 

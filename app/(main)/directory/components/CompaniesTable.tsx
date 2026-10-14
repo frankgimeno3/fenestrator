@@ -1,7 +1,8 @@
 'use client';
 
-import React, { FC, useState, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CompanyService } from '@/apiClient/CompanyService';
 
 interface Company {
@@ -14,15 +15,24 @@ interface Company {
 }
 
 const CompaniesTable: FC = () => {
+  const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
+  const [rowsRevealed, setRowsRevealed] = useState(false);
+  const [filters, setFilters] = useState({
+    name: "",
+    country: "",
+    region: "",
+    description: "",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
   useEffect(() => {
     const fetchCompanies = async () => {
+      const startedAt = Date.now();
+      const MIN_LOADING_MS = 1200;
       setError(null);
       try {
         const data = await CompanyService.getAllCompanies();
@@ -33,23 +43,35 @@ const CompaniesTable: FC = () => {
         setError(message);
         setCompanies([]);
       } finally {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
+        if (remaining) await new Promise((r) => setTimeout(r, remaining));
         setLoading(false);
       }
     };
     fetchCompanies();
   }, []);
 
+  useEffect(() => {
+    setRowsRevealed(true);
+  }, []);
+
   const filteredCompanies = useMemo(() => {
-    if (!filter) return companies;
-    const lowerFilter = filter.toLowerCase();
-    return companies.filter(
-      (company) =>
-        (company.company_name ?? "").toLowerCase().includes(lowerFilter) ||
-        (company.country ?? "").toLowerCase().includes(lowerFilter) ||
-        (company.region ?? "").toLowerCase().includes(lowerFilter) ||
-        (company.main_description ?? "").toLowerCase().includes(lowerFilter)
-    );
-  }, [companies, filter]);
+    const name = filters.name.trim().toLowerCase();
+    const country = filters.country.trim().toLowerCase();
+    const region = filters.region.trim().toLowerCase();
+    const description = filters.description.trim().toLowerCase();
+
+    if (!name && !country && !region && !description) return companies;
+
+    return companies.filter((c) => {
+      if (name && !(c.company_name ?? "").toLowerCase().includes(name)) return false;
+      if (country && !(c.country ?? "").toLowerCase().includes(country)) return false;
+      if (region && !(c.region ?? "").toLowerCase().includes(region)) return false;
+      if (description && !(c.main_description ?? "").toLowerCase().includes(description)) return false;
+      return true;
+    });
+  }, [companies, filters]);
 
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -58,7 +80,17 @@ const CompaniesTable: FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter]);
+  }, [filters]);
+
+  const getRowDelayMs = (index: number) => {
+    const totalMs = 1000;
+    const transitionMs = 500;
+    const maxDelay = Math.max(0, totalMs - transitionMs);
+    const visibleCount = Math.max(1, Math.min(paginatedCompanies.length, 8));
+    if (visibleCount <= 1) return 0;
+    const step = maxDelay / (visibleCount - 1);
+    return Math.round(Math.min(index, visibleCount - 1) * step);
+  };
 
   const handlePrevious = () => {
     setCurrentPage((prev) => Math.max(1, prev - 1));
@@ -72,18 +104,47 @@ const CompaniesTable: FC = () => {
     <div className='w-full'>
       {/* Filter */}
       <div className='mb-6'>
-        <input
-          type='text'
-          placeholder='Search companies by name, country, region, or description...'
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-        />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <input
+            type="text"
+            placeholder="Company name"
+            value={filters.name}
+            onChange={(e) => setFilters((p) => ({ ...p, name: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <input
+            type="text"
+            placeholder="Country"
+            value={filters.country}
+            onChange={(e) => setFilters((p) => ({ ...p, country: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <input
+            type="text"
+            placeholder="Region"
+            value={filters.region}
+            onChange={(e) => setFilters((p) => ({ ...p, region: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={filters.description}
+            onChange={(e) => setFilters((p) => ({ ...p, description: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
       </div>
 
       {/* Loading */}
       {loading && (
-        <div className='mb-6 text-center text-gray-600'>Loading companies...</div>
+        <div className="mb-6 flex items-center justify-center gap-3 text-gray-600">
+          <span
+            className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+            aria-hidden="true"
+          />
+          <span className="text-sm font-medium">Loading companies...</span>
+        </div>
       )}
 
       {/* Error */}
@@ -107,7 +168,7 @@ const CompaniesTable: FC = () => {
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                 Region
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+              <th className='hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                 Description
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
@@ -116,25 +177,60 @@ const CompaniesTable: FC = () => {
             </tr>
           </thead>
           <tbody className='bg-white divide-y divide-gray-200'>
-            {paginatedCompanies.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className="animate-pulse">
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-44 rounded bg-gray-200" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-20 rounded bg-gray-200" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-24 rounded bg-gray-200" />
+                  </td>
+                  <td className="hidden lg:table-cell px-6 py-4">
+                    <div className="h-4 w-72 rounded bg-gray-200" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-10 rounded bg-gray-200" />
+                  </td>
+                </tr>
+              ))
+            ) : paginatedCompanies.length === 0 ? (
               <tr>
                 <td colSpan={5} className='px-6 py-4 text-center text-gray-500'>
                   No companies found
                 </td>
               </tr>
             ) : (
-              paginatedCompanies.map((company) => (
+              paginatedCompanies.map((company, rowIdx) => (
                 <tr
                   key={company.id_company}
-                  className='hover:bg-gray-50 transition-colors'
+                  style={
+                    {
+                      ["--gi-reveal-delay" as any]: `${getRowDelayMs(rowIdx)}ms`,
+                    } as React.CSSProperties
+                  }
+                  className={[
+                    "gi-row-reveal",
+                    rowsRevealed ? "gi-row-reveal--visible" : "gi-row-reveal--hidden",
+                    "hover:bg-gray-50 transition-colors cursor-pointer",
+                  ].join(" ")}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(`/directory/companies/${company.id_company}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(`/directory/companies/${company.id_company}`);
+                    }
+                  }}
                 >
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <Link
-                      href={`/directory/companies/${company.id_company}`}
-                      className='text-blue-600 hover:text-blue-800 font-medium cursor-pointer'
-                    >
+                    <span className='font-medium text-gray-900'>
                       {company.company_name}
-                    </Link>
+                    </span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
                     {company.country}
@@ -142,7 +238,7 @@ const CompaniesTable: FC = () => {
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize'>
                     {company.region}
                   </td>
-                  <td className='px-6 py-4 text-sm text-gray-900 max-w-md truncate'>
+                  <td className='hidden lg:table-cell px-6 py-4 text-sm text-gray-900 max-w-md truncate'>
                     {company.main_description}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>

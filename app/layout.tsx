@@ -1,7 +1,14 @@
-import type { Metadata } from "next";
+import { PortalName, portalSector } from "@/app/GlassInformerSpecificData";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
- 
+
+/** Fixed layout width on phones — same effect as Chrome “Desktop site”. */
+export const viewport: Viewport = {
+  width: 980,
+  initialScale: 1,
+};
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -13,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fenestrator - Glass business management platform",
-  description: "Fenestrator is a platform for managing your glass business",
+  title: `${PortalName}`,
+  description: `Worldwide ${portalSector} news`,
 };
 
 export default function RootLayout({

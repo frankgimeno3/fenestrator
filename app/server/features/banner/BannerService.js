@@ -1,15 +1,27 @@
 import BannerModel from "./BannerModel.js";
 import "../../database/models.js";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { normalizeBannerImageSrc } from "../../../general_components/banners/normalizeBannerImageSrc.js";
+import { Op } from "sequelize";
+import { portal_id } from "../../../GlassInformerSpecificData.js";
 
 function getFallbackBanners() {
     try {
         const jsonPath = join(process.cwd(), "app", "contents", "bannersContents.json");
+        if (!existsSync(jsonPath)) {
+            return [];
+        }
         const fileContent = readFileSync(jsonPath, "utf-8");
-        return JSON.parse(fileContent);
+        const parsed = JSON.parse(fileContent);
+        return Array.isArray(parsed)
+            ? parsed.filter((banner) => banner.portal_id === portal_id).map((banner) => ({
+                ...banner,
+                bannerSrc: normalizeBannerImageSrc(banner.bannerSrc),
+            }))
+            : [];
     } catch (error) {
-        console.error("Error reading fallback banners from JSON:", error);
+        console.warn("Fallback banners JSON unreadable:", error.message);
         return [];
     }
 }
@@ -24,14 +36,17 @@ function weightToPriority(weight) {
 }
 
 function toApiFormat(row) {
+    const rawStatus = String(row.banner_status ?? "").trim().toLowerCase();
     return {
-        id_banner: row.id,
-        bannerType: row.position_type,
-        bannerSrc: row.src,
-        bannerRoute: row.route ?? "/",
-        bannerRedirection: row.redirect_url ?? row.banner_redirection ?? "",
-        bannerPriority: weightToPriority(row.appearance_weight),
-        page_type: row.page_type,
+        id_banner: row.id_banner ?? row.id_banner,
+        bannerType: row.banner_position_type,
+        bannerSrc: normalizeBannerImageSrc(row.banner_image_src),
+        bannerRoute: row.banner_route ?? "/",
+        bannerRedirection: row.banner_redirection_url ?? "",
+        // DB: banner_appearence_weight int (0..3). UI expects 0..2 priority.
+        bannerPriority: Math.max(0, Math.min(2, Number(row.banner_appearence_weight ?? 0) - 1)),
+        page_type: row.banner_page_type,
+        bannerStatus: rawStatus || undefined,
     };
 }
 
@@ -42,11 +57,22 @@ export async function getAllBanners() {
             return getFallbackBanners();
         }
 
+        const today = new Date().toISOString().slice(0, 10);
         const rows = await BannerModel.findAll({
+            where: {
+                [Op.or]: [{ portal_id }, { portal_id: null }],
+                banner_appearence_weight: { [Op.gt]: 0 },
+                banner_starting_date: { [Op.lte]: today },
+                banner_ending_date: { [Op.gte]: today },
+                ...(BannerModel.rawAttributes?.banner_status
+                    ? { banner_status: { [Op.in]: ["published", "active"] } }
+                    : {}),
+            },
             order: [
-                ["position_type", "ASC"],
-                ["appearance_weight", "ASC"],
-                ["created_at", "ASC"],
+                ["banner_position_type", "ASC"],
+                ["banner_appearence_weight", "DESC"],
+                ["banner_position", "ASC"],
+                ["banner_created_at", "ASC"],
             ],
         });
 

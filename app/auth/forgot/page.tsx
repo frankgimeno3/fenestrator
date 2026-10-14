@@ -2,6 +2,18 @@
 
 import React, { FC, useState } from "react";
 import AuthenticationService from "@/apiClient/AuthenticationService";
+import {
+    AUTH_AUX_TEXT,
+    AUTH_CARD,
+    AUTH_ERROR,
+    AUTH_FORM,
+    AUTH_INPUT,
+    AUTH_PAGE_SHELL,
+    AUTH_PRIMARY_BUTTON,
+    AUTH_TEXT,
+    AUTH_TITLE,
+} from "../_components/authFormStyles";
+import Reveal from "@/app/general_components/motion/Reveal";
 
 interface ForgotProps {}
 
@@ -34,84 +46,102 @@ const Forgot: FC<ForgotProps> = ({}) => {
 
     if (success && pendingEmail) {
         return (
-            <div className="flex flex-col bg-white items-center justify-center min-h-screen">
-                <div className="flex flex-col gap-4 bg-gray-900 p-8 rounded shadow-md w-full max-w-md">
-                    <h2 className="text-2xl text-white font-semibold mb-4 text-center">
-                        Revisa tu correo
-                    </h2>
-                    <p className="text-gray-300 text-center">
-                        Te hemos enviado un código de restablecimiento a{" "}
-                        <strong className="text-white">{pendingEmail}</strong>.
-                        Introduce el código y tu nueva contraseña en la siguiente
-                        página.
-                    </p>
-                    <a
-                        href={`/auth/forgot/confirm?email=${encodeURIComponent(pendingEmail)}`}
-                        className="bg-white text-black py-2 rounded hover:bg-gray-300 transition cursor-pointer text-center font-medium"
-                    >
-                        Introducir código y nueva contraseña
-                    </a>
-                    <p className="text-xs text-white text-center">
-                        ¿Recordaste tu contraseña?{" "}
+            <div className={AUTH_PAGE_SHELL}>
+                <div className={`${AUTH_CARD} ${AUTH_FORM}`}>
+                    <Reveal delayMs={0}>
+                        <h2 className={AUTH_TITLE}>
+                            Check your inbox
+                        </h2>
+                    </Reveal>
+                    <Reveal delayMs={120}>
+                        <p className={AUTH_TEXT}>
+                            We have sent a reset code to{" "}
+                            <strong className="text-gray-900">{pendingEmail}</strong>.
+                            Enter the code and your new password on the next page.
+                        </p>
+                    </Reveal>
+                    <Reveal delayMs={180}>
                         <a
-                            href="/auth/login"
-                            className="font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                            href={`/auth/forgot/confirm?email=${encodeURIComponent(pendingEmail)}`}
+                            className={`${AUTH_PRIMARY_BUTTON} text-center`}
                         >
-                            Iniciar sesión
+                            Enter code and new password
                         </a>
-                    </p>
+                    </Reveal>
+                    <Reveal delayMs={240}>
+                        <p className={AUTH_AUX_TEXT}>
+                            Remembered your password?{" "}
+                            <a
+                                href="/auth/login"
+                                className="font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                            >
+                                Log in
+                            </a>
+                        </p>
+                    </Reveal>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col bg-white items-center justify-center min-h-screen">
+        <div className={AUTH_PAGE_SHELL}>
             <form
                 onSubmit={handleForgot}
-                className="flex flex-col gap-4 bg-gray-900 p-8 rounded shadow-md w-full max-w-md"
+                className={`${AUTH_CARD} ${AUTH_FORM}`}
             >
-                <h2 className="text-2xl text-white font-semibold mb-4 text-center">
-                    He olvidado mi contraseña
-                </h2>
+                <Reveal delayMs={0}>
+                    <h2 className={AUTH_TITLE}>
+                        I forgot my password
+                    </h2>
+                </Reveal>
 
-                <p className="text-sm text-gray-300 text-center mb-2">
-                    Introduce tu email y te enviaremos un código para restablecer
-                    tu contraseña.
-                </p>
+                <Reveal delayMs={120}>
+                    <p className={AUTH_TEXT}>
+                        Enter your email and we will send you a code to reset your password.
+                    </p>
+                </Reveal>
 
-                <input
-                    type="email"
-                    placeholder="Introduce tu email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="p-2 rounded bg-black border border-gray-700 text-white placeholder-gray-400"
-                    required
-                />
+                <Reveal delayMs={180}>
+                    <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={AUTH_INPUT}
+                        required
+                    />
+                </Reveal>
 
                 {error && (
-                    <div className="flex flex-col text-red-500 text-sm text-center">
-                        <p>{error}</p>
-                    </div>
+                    <Reveal delayMs={220}>
+                        <div className={AUTH_ERROR}>
+                            <p>{error}</p>
+                        </div>
+                    </Reveal>
                 )}
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="bg-white text-black py-2 rounded hover:bg-gray-300 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {loading ? "Enviando…" : "Enviar código"}
-                </button>
-
-                <p className="text-xs text-white text-center">
-                    ¿Recordaste tu contraseña?{" "}
-                    <a
-                        href="/auth/login"
-                        className="font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1"
+                <Reveal delayMs={260}>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={AUTH_PRIMARY_BUTTON}
                     >
-                        Iniciar sesión
-                    </a>
-                </p>
+                        {loading ? "Sending…" : "Send code"}
+                    </button>
+                </Reveal>
+
+                <Reveal delayMs={320}>
+                    <p className={AUTH_AUX_TEXT}>
+                        Remembered your password?{" "}
+                        <a
+                            href="/auth/login"
+                            className="font-bold text-indigo-400 hover:text-indigo-300 cursor-pointer ml-1"
+                        >
+                            Log in
+                        </a>
+                    </p>
+                </Reveal>
             </form>
         </div>
     );

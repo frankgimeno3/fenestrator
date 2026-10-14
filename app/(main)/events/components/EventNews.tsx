@@ -3,7 +3,7 @@
 import React, { FC, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArticleService } from '@/apiClient/ArticleService';
+import { canOptimizeRemoteImageSrc } from '@/app/lib/remoteImage';
 import { EventService } from '@/apiClient/EventService';
 import type { Event } from './EventsCalendar';
 
@@ -29,22 +29,10 @@ const EventNews: FC = () => {
     const load = async () => {
       try {
         const [articlesData, eventsData] = await Promise.all([
-          ArticleService.getAllArticles(),
+          EventService.getEventNewsArticles(),
           EventService.getAllEvents(),
         ]);
-        const filtered = (Array.isArray(articlesData) ? articlesData : [])
-          .filter(
-            (a: any) =>
-              a &&
-              a.id_article &&
-              (a.is_article_event === true || a.isEventNews === true)
-          )
-          .sort((a: any, b: any) => {
-            const dateA = new Date(a.date || 0).getTime();
-            const dateB = new Date(b.date || 0).getTime();
-            return dateB - dateA;
-          });
-        setArticles(filtered);
+        setArticles(Array.isArray(articlesData) ? articlesData : []);
         const map: Record<string, Event> = {};
         (eventsData || []).forEach((e: Event) => {
           map[e.id_fair] = e;
@@ -104,8 +92,8 @@ const EventNews: FC = () => {
                 alt={article.articleTitle || 'Article'}
                 fill
                 className="object-cover"
-                sizes="128px"
-                unoptimized
+                sizes="(max-width: 640px) 28vw, 128px"
+                unoptimized={!canOptimizeRemoteImageSrc(imageUrl)}
               />
             </div>
             {/* Content right: article title + event info */}

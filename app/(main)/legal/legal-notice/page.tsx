@@ -1,9 +1,10 @@
+import { PortalName, portalSector } from "@/app/GlassInformerSpecificData";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Legal Notice | GlassInformer",
-  description: "Legal notice and general information about GlassInformer.",
+  title: `Legal Notice | ${PortalName}`,
+  description: `Legal notice and general information about ${PortalName}.`,
 };
 
 export default function LegalNoticePage() {
@@ -18,14 +19,14 @@ export default function LegalNoticePage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">1. Publisher &amp; responsible party</h2>
           <p>
-            This website is operated by <strong>GlassInformer</strong> (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), a platform providing industry news, insights, and resources for the glass sector. For the purposes of the applicable legislation, the party responsible for the content of this website is GlassInformer.
+            This website is operated by <strong>{PortalName}</strong> (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), a platform providing industry news, insights, and resources for the {portalSector}. For the purposes of the applicable legislation, the party responsible for the content of this website is {PortalName}.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">2. Purpose of the website</h2>
           <p>
-            GlassInformer offers news articles, publications, a company and product directory, events information, and mediakit services. The site is intended for professionals and businesses in the glass industry and related sectors.
+            {PortalName} offers news articles, publications, a company and product directory, events information, and mediakit services. The site is intended for professionals and businesses in the {portalSector} and related sectors.
           </p>
         </section>
 
@@ -39,7 +40,7 @@ export default function LegalNoticePage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">4. Limitation of liability</h2>
           <p>
-            We strive to keep the information on this site accurate and up to date. However, we do not guarantee the completeness, accuracy, or timeliness of the content. GlassInformer shall not be liable for any direct or indirect damages arising from the use of or reliance on the information provided on this website. Links to third-party sites are provided for convenience; we are not responsible for their content or practices.
+            We strive to keep the information on this site accurate and up to date. However, we do not guarantee the completeness, accuracy, or timeliness of the content. {PortalName} shall not be liable for any direct or indirect damages arising from the use of or reliance on the information provided on this website. Links to third-party sites are provided for convenience; we are not responsible for their content or practices.
           </p>
         </section>
 
@@ -53,7 +54,7 @@ export default function LegalNoticePage() {
         <section>
           <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-2">6. Governing law</h2>
           <p>
-            These terms and the use of this website are governed by the laws applicable in the jurisdiction of GlassInformer. Any disputes shall be subject to the exclusive jurisdiction of the courts of that jurisdiction, unless otherwise required by mandatory law.
+            These terms and the use of this website are governed by the laws applicable in the jurisdiction of {PortalName}. Any disputes shall be subject to the exclusive jurisdiction of the courts of that jurisdiction, unless otherwise required by mandatory law.
           </p>
         </section>
 
