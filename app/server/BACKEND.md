@@ -131,3 +131,8 @@
 ## Portal data isolation
 
 Article reads join `articles_db` with `article_portals` for the configured portal and require public, published status. Content blocks use `article_contents` in position order. Banners include only the configured `portal_id` and explicitly shared (`NULL`) banners; fallback JSON is filtered by the configured ID. Schema changes belong to central-panel SQL migrations, and production startup does not call `sync()`.
+
+
+## Directory contact data and shared companies
+
+Company list and detail responses include the stored image, address, telephone and website. Detail lookup prioritises membership of the selected portal when a company belongs to multiple portals. Article responses retain aligned company-name and company-ID arrays so public news links use the actual directory records.
